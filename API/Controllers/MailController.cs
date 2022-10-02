@@ -1,4 +1,6 @@
-﻿using MailKit.Net.Smtp;
+﻿using Mail.Business.Abstract;
+using Mail.Business.Entities.Dtos;
+using MailKit.Net.Smtp;
 using MailKit.Security;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -11,28 +13,33 @@ namespace API.Controllers
     [ApiController]
     public class MailController : ControllerBase
     {
-        [HttpPost]
-        public async Task<IActionResult> SendMail()
+        private readonly IMailService _mailService;
+
+        public MailController(IMailService mailService)
         {
-            var mail = new MimeMessage();
-            mail.From.Add(MailboxAddress.Parse("admin@ogunergin.com"));
-            mail.To.Add(MailboxAddress.Parse("ogun.ergin35@gmail.com"));
-            mail.Subject = "Test";
-            mail.Body = new TextPart(TextFormat.Html)
-            {
-                Text = "test body"
-            };
+            _mailService = mailService;
+        }
 
-            using (var smtp = new SmtpClient())
-            {
-                await smtp.ConnectAsync("smtp.turkticaret.net", 587, SecureSocketOptions.StartTls);
-                await smtp.AuthenticateAsync("admin@ogunergin.com", "PASSWORD GOES HERE");
-                await smtp.SendAsync(mail);
-                await smtp.DisconnectAsync(true);
+        [HttpPost]
+        public async Task<IActionResult> SendMail(string receiverMail)
+        {
+            await _mailService.SendMail(receiverMail);
+            return NoContent();
+        }
 
+        [HttpPost("addmailparameter")]
+        public async Task<IActionResult> AddMailParameter(ParameterAddDto parameterAddDto)
+        {
+            await _mailService.AddMailParameterAsync(parameterAddDto);
 
-            }
-            return Ok();
+            return NoContent();
+        }
+
+        [HttpPost("addmailtemplate")]
+        public async Task<IActionResult> AddMailTemplate(TemplateAddDto templateAddDto)
+        {
+            await _mailService.AddMailTemplateAsync(templateAddDto);
+            return NoContent();
         }
     }
 }
